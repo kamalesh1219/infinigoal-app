@@ -16,3 +16,5 @@ export const getData = async (key: string) => {
     console.error("Load error:", e);
   }
 };
+
+

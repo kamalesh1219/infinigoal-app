@@ -3,46 +3,49 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
-  Modal,
   FlatList,
+  Modal,
+  TextInput,
   ScrollView,
-  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
 import Header from "@/components/Header";
-
-const { width } = Dimensions.get("window");
+import { getDueText } from "@/utils/dateUtils";
 
 type Task = {
   id: string;
   title: string;
+  description: string;
+  assignee: string;
+  dueDate: string;
+  priority: string;
   status: "new" | "scheduled" | "progress" | "completed";
 };
 
-export default function Kanban() {
+export default function Kanban( ) {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [activeTab, setActiveTab] = useState<"new" | "scheduled" | "progress" | "completed">("new");
   const [modalVisible, setModalVisible] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
+
+  // form fields
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [assignee, setAssignee] = useState("");
+  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [priority, setPriority] = useState("None");
 
   useEffect(() => {
     loadTasks();
   }, []);
 
   const loadTasks = async () => {
-    try {
-      const data = await AsyncStorage.getItem("tasks");
-      if (data) {
-        const parsed = JSON.parse(data);
-        if (Array.isArray(parsed)) setTasks(parsed);
-        else setTasks([]);
-      }
-    } catch (e) {
-      console.log("Error loading tasks:", e);
-      setTasks([]);
-    }
+    const data = await AsyncStorage.getItem("tasks");
+    if (data) setTasks(JSON.parse(data));
   };
 
   const saveTasks = async (newTasks: Task[]) => {
@@ -50,24 +53,29 @@ export default function Kanban() {
     await AsyncStorage.setItem("tasks", JSON.stringify(newTasks));
   };
 
-  const addTask = () => {
-    if (!newTaskTitle.trim()) return;
+  const handleAddTask = () => {
+    if (!title.trim()) return;
     const newTask: Task = {
       id: Date.now().toString(),
-      title: newTaskTitle,
+      title,
+      description,
+      assignee,
+      dueDate: dueDate ? dueDate.toDateString() : "No date",
+      priority,
       status: "new",
     };
     const updated = [...tasks, newTask];
     saveTasks(updated);
-    setNewTaskTitle("");
-    setModalVisible(false);
+    resetForm();
   };
 
-  const changeStatus = (id: string, newStatus: Task["status"]) => {
-    const updated = tasks.map((task) =>
-      task.id === id ? { ...task, status: newStatus } : task
-    );
-    saveTasks(updated);
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setAssignee("");
+    setDueDate(null);
+    setPriority("None");
+    setModalVisible(false);
   };
 
   const deleteTask = (id: string) => {
@@ -75,133 +83,193 @@ export default function Kanban() {
     saveTasks(updated);
   };
 
-  const renderColumn = (
-    title: string,
-    status: Task["status"],
-    color: string
-  ) => (
-    <View
-      style={{ width: width / 2.3 }}
-      className="mx-2 my-4 bg-gray-100 rounded-2xl p-4"
-    >
-      <Text
-        className="text-xl font-bold mb-3"
-        style={{
-          color,
-          textShadowColor: "#d1d5db",
-          textShadowRadius: 3,
-        }}
-      >
-        {title}
-      </Text>
+  const tabs = [
+    { key: "new", title: "New Task" },
+    { key: "scheduled", title: "Scheduled" },
+    { key: "progress", title: "In Progress" },
+    { key: "completed", title: "Completed" },
+  ];
 
+  const filtered = tasks.filter((t) => t.status === activeTab);
+
+  return (
+    <SafeAreaView className="flex-1 bg-white mb-24">
+      <Header title="My work" />
+
+      {/* Tabs */}
+   
+      <View className="flex-row justify-around items-center border-b border-gray-200 bg-white py-4">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.key;
+          const count = tasks.filter((t) => t.status === tab.key).length;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              onPress={() => setActiveTab(tab.key as Task["status"])}
+              className={`px-3 py-1 rounded-full ${
+                isActive ? "border-b-4 border-blue-500" : ""
+              }`}
+            >
+              <Text
+                className={`text-lg font-semibold ${
+                  isActive ? "text-blue-200" : "text-gray-600"
+                }`}
+              >
+                {tab.title} ({count})
+              </Text>
+            </TouchableOpacity>
+            
+          );
+        })}
+      </View>
+      
+
+      {/* Task list */}
       <FlatList
-        data={tasks.filter((t) => t.status === status)}
+        data={filtered}
         keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <Text className="text-center text-gray-400 mt-10">
+            No tasks in {activeTab} list
+          </Text>
+        }
         renderItem={({ item }) => (
-          <View className="bg-white p-4 mb-3 rounded-2xl shadow-sm border border-gray-100">
-            <Text className="text-gray-800 font-semibold mb-2">
-              {item.title}
-            </Text>
-
-            <View className="flex-row justify-between items-center">
-              <View className="flex-row flex-wrap">
-                {["new", "scheduled", "progress", "completed"].map((s) => (
-                  <TouchableOpacity
-                    key={s}
-                    onPress={() => changeStatus(item.id, s as Task["status"])}
-                    className={`px-3 py-1 rounded-full mr-2 mb-2 ${
-                      item.status === s
-                        ? "bg-blue-600"
-                        : "bg-gray-200 border border-gray-300"
-                    }`}
-                  >
-                    <Text
-                      className={`text-xs font-medium ${
-                        item.status === s ? "text-white" : "text-gray-600"
-                      }`}
-                    >
-                      {s === "new"
-                        ? "New"
-                        : s === "scheduled"
-                        ? "Scheduled"
-                        : s === "progress"
-                        ? "Progress"
-                        : "Done"}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+          <View className="bg-blue-100 px-5 py-4 mx-4 my-4 rounded-xl flex-row justify-between items-center ">
+            <View className="flex-row items-center space-x-3">
+              <View className="bg-purple-600 rounded-full w-9 h-9 flex items-center justify-center ">
+                <Text className="text-white font-bold text-base">
+                  {item.title.charAt(0).toUpperCase()}
+                </Text>
               </View>
-
-              <TouchableOpacity onPress={() => deleteTask(item.id)}>
-                <Ionicons name="trash-outline" size={18} color="#dc2626" />
-              </TouchableOpacity>
+              <View className="pl-2 ">
+                <Text className="text-gray-800 font-semibold text-lg">
+                  {item.title}
+                </Text>
+                <Text className="text-gray-500 text-sm pt-2">
+                    {item.assignee ? `👤 ${item.assignee}` : " "}
+                    {item.status}
+                  </Text>
+                <Text className="text-gray-500 text-sm pt-2">
+                  {getDueText(item.dueDate)}
+                </Text>               
+              </View>
             </View>
+            <TouchableOpacity onPress={() => deleteTask(item.id)}>
+              <Ionicons name="trash-outline" size={20} color="#dc2626" />
+            </TouchableOpacity>
           </View>
         )}
       />
-    </View>
-  );
 
-  return (
-    <SafeAreaView className="flex-1 bg-white">
-      <Header title="Task Manager" />
-
-      {/* Horizontal Scroll for Columns */}
-      <ScrollView
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        className="flex-1"
+      {/* Floating Add Button */}
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        className="absolute bottom-6 right-6 bg-blue-600 rounded-full p-4 shadow-lg"
       >
-        {renderColumn("New Task", "new", "#2563eb")}
-        {renderColumn("Scheduled", "scheduled", "#059669")}
-        {renderColumn("In Progress", "progress", "#ca8a04")}
-        {renderColumn("Completed", "completed", "#7c3aed")}
-      </ScrollView>
+        <Ionicons name="add" size={30} color="white" />
+      </TouchableOpacity>
 
-      {/* Add Task Modal */}
+      {/* Create Task Modal */}
       <Modal
         visible={modalVisible}
         transparent
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View className="flex-1 justify-center items-center bg-black/40">
-          <View className="bg-white w-96 p-5 rounded-2xl">
-            <Text className="text-lg font-semibold mb-2">Add New Task</Text>
+        <View className="flex-1 justify-center items-center bg-black/50">
+          <View className="bg-white w-11/12 rounded-2xl p-5">
+            <Text className="text-2xl font-semibold mb-4">Create Task</Text>
+
+            {/* Task Name */}
+            <Text className="text-base font-semibold mb-1">Task Name</Text>
             <TextInput
               placeholder="Enter task name..."
-              className="border border-gray-300 rounded-lg p-2 mb-4"
-              value={newTaskTitle}
-              onChangeText={setNewTaskTitle}
+              value={title}
+              onChangeText={setTitle}
+              className="border border-gray-300 rounded-lg px-2 py-4 mb-3"
             />
-            <View className="flex-row justify-end">
+
+            {/* Description */}
+            <Text className="text-base font-semibold mb-1">Description</Text>
+            <TextInput
+              placeholder="Describe the task..."
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={3}
+              className="border border-gray-300 rounded-lg px-2 py-4 mb-3 text-gray-700"
+            />
+
+            {/* Assignee */}
+            <Text className="text-base font-semibold mb-1">Assignee</Text>
+            <TextInput
+              placeholder="Assignee to..."
+              value={assignee}
+              onChangeText={setAssignee}
+              className="border border-gray-300 rounded-lg px-2 py-4 mb-3"
+            />
+
+            {/* Date & Priority Row */}
+            <View className="flex-row justify-between mb-3">
+              <View className="w-[48%]">
+                <Text className="text-base font-semibold mb-1">Due Date</Text>
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(true)}
+                  className="border border-gray-300 rounded-lg px-2 py-3"
+                >
+                  <Text className="text-gray-600">
+                    {dueDate ? dueDate.toLocaleDateString() : "Select date"}
+                  </Text>
+                </TouchableOpacity>
+
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={dueDate || new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowDatePicker(false);
+                      if (selectedDate) setDueDate(selectedDate);
+                    }}
+                  />
+                )}
+              </View>
+
+              <View className="w-[48%]">
+                <Text className="text-base font-semibold mb-1">Priority</Text>
+                <View className="border border-gray-300 rounded-lg">
+                  <Picker
+                    selectedValue={priority}
+                    onValueChange={(v) => setPriority(v)}
+                    style={{ height: 40 }}
+                  >
+                    <Picker.Item label="None" value="None" />
+                    <Picker.Item label="Low" value="Low" />
+                    <Picker.Item label="Medium" value="Medium" />
+                    <Picker.Item label="High" value="High" />
+                  </Picker>
+                </View>
+              </View>
+            </View>
+
+            {/* Buttons */}
+            <View className="flex-row justify-end mt-2">
               <TouchableOpacity
-                onPress={() => setModalVisible(false)}
+                onPress={resetForm}
                 className="px-4 py-2 rounded-lg mr-2 bg-gray-300"
               >
                 <Text>Cancel  </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={addTask}
-                className="px-4 py-2 rounded-lg bg-blue-600"
+                onPress={handleAddTask}
+                className="px-4 py-2 rounded-lg bg-blue-600 "
               >
-                <Text className="text-white font-medium">Add</Text>
+                <Text className="text-white font-medium">Create Task</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
-      {/* Floating Add Button */}
-      <TouchableOpacity
-        onPress={() => setModalVisible(true)}
-        className="absolute bottom-6 right-6 bg-blue-600 rounded-full p-4 shadow-lg mb-24"
-      >
-        <Ionicons name="add" size={28} color="white" />
-      </TouchableOpacity>
     </SafeAreaView>
   );
 }
