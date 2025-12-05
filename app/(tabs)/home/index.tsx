@@ -1,0 +1,142 @@
+import { View, Text,ScrollView,TouchableOpacity, Image,Dimensions } from "react-native";
+import { Link } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Header from "@/components/Header";
+import Searchbar from "@/components/Searchbar";
+import BannerSlider from "@/components/BannerSlider";
+import KitchenCategories from "@/components/KitchenCategories";
+import HomeCategories from "@/components/HomeCategories";
+import SnacksCategories from "@/components/SnacksCategories";
+import { homeCare, personalCare,Cards } from "@/src/data/Categories";
+import SliderProduct from "@/components/SliderProduct";
+import RegularNeeds from "@/components/RegularNeeds";
+import Bestseller from "@/components/Bestseller";
+import OffersZone from "@/components/OffersZone";
+import RecentlyAdded from "@/components/RecentlyAdded";
+import Footer from "@/components/Footer";
+import TopBrands from "@/components/TopBrands";
+
+
+
+export default function HomeScreen() {
+    const { width: screenWidth } = Dimensions.get("window");
+  return (
+    
+    <SafeAreaView className="flex-1 bg-white">
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+      {/* Header */} 
+      <Header/>
+
+      {/* Searchbar */} 
+      <Searchbar />
+
+      {/* SLIDER */}
+      <BannerSlider />
+
+     {/* Categories */}
+     <KitchenCategories />
+
+     {/* Use same component with different title & data */}
+      <HomeCategories  
+        title={homeCare.title}
+        smallCards={homeCare.smallCards}
+      />
+
+      <HomeCategories  
+         title={personalCare.title}
+         smallCards={personalCare.smallCards}
+      />
+
+     {/* SnacksCategories */}
+     <SnacksCategories />
+
+     <RegularNeeds />
+
+     {/* Signature product */}
+      <View className="mx-4 px-4 mt-10 bg-yellow-300 rounded-lg">
+       
+         <Text className="italic font-bold text-2xl text-center mt-4 mb-8 ">InfiniGoal Signatures</Text>
+
+        <View className="flex-row flex-wrap justify-between">
+          {Cards.map((item,i) =>(
+           <TouchableOpacity 
+            key={i}
+            className="bg-[#FEFFEC] w-[32%] rounded-md p-4 shadow-md  mb-4 items-center">
+            <Image
+              source={item.image}
+              style={{
+                width: screenWidth * 0.26,   // 32% of screen width
+                height: screenWidth * 0.40,  // 45% of screen width
+              }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+          ))}          
+        </View>
+      </View>
+    
+      <SliderProduct/>
+
+      <Bestseller />
+      
+      <OffersZone />
+
+      <RecentlyAdded />
+
+      {/* Assures  */}
+      <View className="mt-14 bg-white">
+          <View className="flex-row  justify-between px-2">
+              <View className="w-[49%] bg-gray-200  rounded-2xl pb-2">
+               <Image 
+                 source={{ uri:"https://infinigoal.in/wp-content/uploads/2025/01/1000200847.png"}}
+                 className="w-full h-48 mt-4"
+                 resizeMode="contain"
+               /> 
+              <Text className="font-bold text-lg text-center mt-5">Monthly Delivery</Text>
+              <Text className="font-normal text-sm text-center mt-2">Your Monthly Grocery will be delivered in Best Price</Text>
+              </View> 
+              <View className="w-[49%] bg-gray-200 rounded-2xl pb-2">
+                <Image 
+                 source={{ uri:" https://infinigoal.in/wp-content/uploads/2025/01/1000200663.png"}}             
+                 className="w-full h-48 mt-4"
+                 resizeMode="contain"
+               /> 
+                <Text className="font-bold text-lg text-center mt-5">Quality Assured</Text>
+                <Text className="font-normal text-sm text-center mt-2">We Ensure our Quality is Gaurantied.</Text>
+              </View> 
+         </View>
+
+           <View className="flex-row justify-between mt-2 px-2">
+              <View className="w-[49%] bg-gray-200 rounded-2xl pb-2">
+                <Image 
+                 source={{ uri:"https://infinigoal.in/wp-content/uploads/2025/01/1000200853.png"}}
+                 className="w-full h-48 mt-4"
+                 resizeMode="contain"
+               /> 
+              <Text className="font-bold text-lg text-center mt-5">Cash On Delivery</Text>
+              <Text className="font-normal text-sm text-center mt-2">We Offer a Cash On Delivery every month</Text>
+              </View> 
+              <View className="w-[49%] bg-gray-200  rounded-2xl pb-2">
+                <Image 
+                 source={{ uri:"https://infinigoal.in/wp-content/uploads/2025/01/1000200856.png"}}
+                 className="w-full h-48 mt-4"
+                 resizeMode="contain"
+               /> 
+                <Text className="font-bold text-lg text-center mt-5">Return Policy</Text>
+                <Text className="font-normal text-sm text-center mt-2">If you are not satisfied we will offer 10 Days return Policy</Text>
+              </View> 
+         </View>
+
+      </View>
+
+      <TopBrands />
+
+      {/* Footer  */}
+       <Footer />
+  </ScrollView> 
+    </SafeAreaView>
+  );
+}
