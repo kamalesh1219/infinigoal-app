@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { router } from "expo-router";
 
 export default function CartPage() {
-    
+
     type CartItem = {
     id: string | number;
     title: string;
