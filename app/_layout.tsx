@@ -4,6 +4,8 @@ import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { ThemeProvider, DefaultTheme } from "@react-navigation/native";
 import { useEffect } from "react";
+import AuthProvider from "@/providers/AuthProviders";
+ 
 
 // Prevent auto-hide
 SplashScreen.preventAutoHideAsync();
@@ -27,11 +29,14 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="loading" />        {/* Splash + auth check */}
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
+    <AuthProvider> 
+      <Stack screenOptions={{ headerShown: false }}>   
+          <Stack.Screen name="(auth)" />      
+          <Stack.Screen name="(tabs)" />          
+          <Stack.Screen name="categorie/[slug]" />
+          <Stack.Screen name="productdetails/[id]" />
       </Stack>
+    </AuthProvider>   
     </ThemeProvider>
   );
 }

@@ -1,7 +1,14 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "@/providers/AuthProviders";
 
 export default function TabsLayout() {
+   const { session } = useAuth();
+   
+     if(!session){
+      return <Redirect href={'/'} />
+     } 
+
   return (
     <Tabs screenOptions={{ headerShown: false, tabBarActiveTintColor: "#FF7B00" }}>
       

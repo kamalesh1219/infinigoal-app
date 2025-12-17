@@ -12,22 +12,14 @@ import { supabase } from "@/src/lib/supabase";
 export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function handleRegister() {
-    if (!email || !password) {
-      Alert.alert("Error", "Fill all fields");
-      return;
-    }
+    async function signUpWithEmail() {
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({ email, password });
 
-    const { error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password: password.trim(),
-    });
-
-    if (error) {
-      Alert.alert("Register Error", error.message);
-      return;
-    }
+    if (error) Alert.alert(error.message);
+    setLoading(false);
 
     Alert.alert(
       "Success",
@@ -64,11 +56,12 @@ export default function SignUpScreen() {
       />
 
       <TouchableOpacity
-        onPress={handleRegister}
+        onPress={signUpWithEmail}
+        disabled={loading}
         className="bg-orange-500 py-4 rounded-full"
       >
         <Text className="text-white text-center font-bold text-lg">
-          Sign Up
+          {loading ? 'Creating account...' : 'Create account'}
         </Text>
       </TouchableOpacity>
 

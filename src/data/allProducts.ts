@@ -1,14 +1,10 @@
 // allProducts.ts
 import {
-  homeCare,
-  personalCare,
+  
+
   Cards,
- 
-
-
-  snacksCategories,
   HotDealsproducts,
-  kitchenCategories,
+  
 } from "./Categories";
 
 // Converts ANY product/category shape into clean standard format
@@ -32,8 +28,8 @@ function normalize(list: any[], prefix: string, category: string) {
 
 export const allProducts = [
   // Category-type cards (optional for details)
-  ...normalize(homeCare.smallCards, "homeCare", "homecare"),
-  ...normalize(personalCare.smallCards, "personalCare", "personalcare"),
+
+
   ...normalize(Cards, "cards", "signature"),
 
   // REAL PRODUCTS – these we will open in ProductDetails
@@ -42,9 +38,7 @@ export const allProducts = [
 
   ...normalize(HotDealsproducts, "slider", "hotdeals"),
 
-  // Kitchen category cards (if needed)
-  ...normalize(kitchenCategories.bigCards, "kitchenbig", "kitchen"),
-  ...normalize(kitchenCategories.smallCards, "kitchensmall", "kitchen"),
+
 ];
 
 // (optional helper)
